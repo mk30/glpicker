@@ -51,4 +51,8 @@ regl.frame(function(context){
     draw.catmug()
   })
 })
-
+window.addEventListener('click',
+  function (ev){
+    console.log(ev.offsetX + ' , ' + ev.offsetY)
+  }
+)
