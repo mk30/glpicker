@@ -53,7 +53,7 @@ var catopts = {
   primitive: "triangles",
   elements: catmug.cells
 }
-function catmugshow (regl) {
+function catmugfg (regl) {
   return regl(Object.assign({
     frag: `
       precision mediump float;
@@ -64,7 +64,7 @@ function catmugshow (regl) {
     `
   }, catopts))
 }
-function catmugpick (regl) {
+function catmugbg (regl) {
   return regl(Object.assign({
     framebuffer: regl.prop('framebuffer'), 
     frag: `
@@ -77,18 +77,18 @@ function catmugpick (regl) {
   }, catopts))
 }
 var draw = {
-  catmug : catmugshow(regl),
-  pick : catmugpick(regl)
+  catmugfg : catmugfg(regl),
+  catmugbg : catmugbg(regl)
 }
 regl.frame(function(context){
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    draw.catmug()
+    draw.catmugfg()
   })
 })
 window.addEventListener('click', function (ev){ 
   console.log(ev.offsetX + ' , ' + ev.offsetY)
   camera(function(){
-    getobjectid(draw.pick, ev.offsetX, ev.offsetY)
+    getobjectid(draw.catmugbg, ev.offsetX, ev.offsetY)
   })
 })
