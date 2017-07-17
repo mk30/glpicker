@@ -3,22 +3,24 @@ var regl = require('regl')({
   attributes: {preserveDrawingBuffer: true}
 })
 var camera = require('regl-camera')(regl,{
-  distance:  4
+  distance: 7 
 })
 var anormals = require('angle-normals')
 var mat4 = require('gl-mat4')
 var glsl = require('glslify')
 var catmug = require('./libraries/catmug.json')
-var model = []
+var cmodel = []
 var fb = regl.framebuffer({
   colorFormat: 'rgba',
   colorType: 'float32'
 })
-function getobjectid (draw, offsetx, offsety) {
+function getobjectid (draws, offsetx, offsety) {
   fb.resize(window.innerWidth, window.innerHeight)
   regl.clear({ color: [0,0,0,1], depth: true, framebuffer: fb })
-  draw({ framebuffer: fb }, function () {
-    regl.draw()
+  draws.forEach(function(draw){
+    draw({ framebuffer: fb })
+  })
+  regl.draw(function () {
     var data = regl.read({
       x: offsetx,
       y: offsety,
@@ -47,7 +49,7 @@ var catopts = {
   },
   uniforms: {
     model: function (context){
-      return mat4.identity(model)
+      return mat4.identity(cmodel)
     },
     time: regl.context('time')
   },
@@ -77,75 +79,76 @@ function catmugbg (regl) {
     `
   }, catopts))
 }
-var mesh = require('./libraries/phone.json')
-var rmat = []
-function phone (regl){
-  return regl({
-    frag: glsl`
-      precision mediump float;
-      #pragma glslify: snoise = require('glsl-noise/simplex/4d')
-      varying vec3 vnormal, vpos;
-      uniform float t;
-      void main () {
-        vec3 p = vnormal / snoise(vec4(vpos*0.01,sin(t)+20.5));
-        float cross = abs(max(
-          max(sin(p.z*10.0), sin(p.y*01.0)),
-          sin(p.x*10.0)
-          ));
-        gl_FragColor = vec4(p, 1);
-      }`,
-    vert: glsl`
-      precision mediump float;
-      uniform mat4 model, projection, view;
-      attribute vec3 position, normal;
-      varying vec3 vnormal, vpos;
-      uniform float t;
-      void main () {
-        vnormal = normal;
-        vpos = position;
-        gl_Position = projection * view * model *
-        vec4(position, 1.0);
-      }`,
-    attributes: {
-      position: mesh.positions,
-      normal: anormals(mesh.cells, mesh.positions)
+var phone = require('./libraries/phone.json')
+var pmodel = []
+var phoneopts = { 
+  vert: `
+    precision mediump float;
+    uniform mat4 projection, view, model;
+    attribute vec3 position, normal;
+    varying vec3 vnorm, vpos;
+    void main (){
+      vnorm = normal;
+      vpos = position;
+      gl_Position = projection * view * model *
+      vec4(position, 1);
+    }
+  `,
+  attributes: {
+    position: phone.positions,
+    normal: anormals(phone.cells, phone.positions)
+  },
+  uniforms: {
+    model: function (context){
+      mat4.identity(pmodel)
+      mat4.translate(pmodel, pmodel, [0,1,0])
+      mat4.scale(pmodel, pmodel, [0.01,0.01,0.01])
+      return pmodel
     },
-    elements: mesh.cells,
-    uniforms: {
-      t: function(context, props){
-           return context.time
-         },
-      model: function(context, props){
-        var t = context.time
-        mat4.identity(rmat)
-        mat4.scale(rmat, rmat,[0.1,0.1,0.1])
-        mat4.rotateY(rmat, rmat, t)
-        return rmat
+    time: regl.context('time')
+  },
+  primitive: "triangles",
+  elements: phone.cells
+}
+function phonefg (regl) {
+  return regl(Object.assign({
+    frag: `
+      precision mediump float;
+      varying vec3 vnorm, vpos;
+      void main (){
+        gl_FragColor = vec4(vnorm,1);
       }
-    },
-    primitive: "triangles",
-    blend: {
-      enable: true,
-      func: { src: 'src alpha', dst: 'one minus src alpha' }
-    },
-    cull: { enable: true }
-  })
+    `
+  }, phoneopts))
+}
+function phonebg (regl) {
+  return regl(Object.assign({
+    framebuffer: regl.prop('framebuffer'), 
+    frag: `
+      precision mediump float;
+      varying vec3 vnorm, vpos;
+      void main (){
+        gl_FragColor = vec4(0,1,0,1);
+      }
+    `
+  }, phoneopts))
 }
 var draw = {
   catmugfg : catmugfg(regl),
   catmugbg : catmugbg(regl),
-  phone: phone(regl)
+  phonefg: phonefg(regl),
+  phonebg: phonebg(regl)
 }
 regl.frame(function(context){
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
     draw.catmugfg()
-    draw.phone()
+    draw.phonefg()
   })
 })
 window.addEventListener('click', function (ev){ 
   console.log(ev.offsetX + ' , ' + ev.offsetY)
   camera(function(){
-    getobjectid(draw.catmugbg, ev.offsetX, ev.offsetY)
+    getobjectid([draw.catmugbg,draw.phonebg], ev.offsetX, ev.offsetY)
   })
 })
