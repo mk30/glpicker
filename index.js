@@ -21,7 +21,7 @@ function getobjectid (draw, offsetx, offsety) {
     regl.draw()
     var data = regl.read({
       x: offsetx,
-      y: offsety,
+      y: window.innerHeight - offsety,
       width: 1,
       height: 1
     })
@@ -81,20 +81,19 @@ var mesh = require('./libraries/phone.json')
 var rmat = []
 function phone (regl){
   return regl({
-    frag: glsl`
+    frag: `
       precision mediump float;
-      #pragma glslify: snoise = require('glsl-noise/simplex/4d')
       varying vec3 vnormal, vpos;
       uniform float t;
       void main () {
-        vec3 p = vnormal / snoise(vec4(vpos*0.01,sin(t)+20.5));
+        vec3 p = vnormal; 
         float cross = abs(max(
           max(sin(p.z*10.0), sin(p.y*01.0)),
           sin(p.x*10.0)
           ));
         gl_FragColor = vec4(p, 1);
       }`,
-    vert: glsl`
+    vert: `
       precision mediump float;
       uniform mat4 model, projection, view;
       attribute vec3 position, normal;
@@ -118,8 +117,6 @@ function phone (regl){
       model: function(context, props){
         var t = context.time
         mat4.identity(rmat)
-        mat4.scale(rmat, rmat,[0.1,0.1,0.1])
-        mat4.rotateY(rmat, rmat, t)
         return rmat
       }
     },
@@ -139,7 +136,7 @@ var draw = {
 regl.frame(function(context){
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    draw.catmugfg()
+    draw.catmugbg({framebuffer: undefined})
     draw.phone()
   })
 })
