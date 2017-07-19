@@ -16,18 +16,27 @@ var fb = regl.framebuffer({
   colorType: 'float32'
 })
 function getobjectid (draws, offsetx, offsety) {
+  fb.resize(window.innerWidth, window.innerHeight)
   regl.clear({ color: [0,0,0,1], depth: true, framebuffer: fb })
   draws.forEach(function(draw){
     draw({ framebuffer: fb })
   })
+  var x
+  var y
+  if (window.innerHeight - offsety <= 0) y = 1
+    else y = window.innerHeight - offsety
+  if (offsetx <= 0) x = 1 
+    else x = offsetx
+  console.log(offsetx, offsety)
   regl.draw(function () {
     var data = regl.read({
-      x: offsetx,
-      y: window.innerHeight - offsety,
+      framebuffer: fb,
+      x: x,
+      y: y,
       width: 1,
       height: 1
     })
-    console.log(data)
+    //console.log(data)
   })
 }
 var catopts = { 
@@ -138,16 +147,15 @@ var draw = {
   phonebg: phonebg(regl)
 }
 regl.frame(function(context){
-  fb.resize(context.viewportWidth, context.viewportHeight)
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    //draw.catmugfg()
+    draw.catmugbg({framebuffer: null})
     draw.phonebg({framebuffer: null})
   })
 })
 window.addEventListener('click', function (ev){ 
   console.log(ev.offsetX + ' , ' + ev.offsetY)
   camera(function(){
-    getobjectid([draw.phonebg], ev.offsetX, ev.offsetY)
+    getobjectid([draw.catmugbg, draw.phonebg], ev.offsetX, ev.offsetY)
   })
 })
