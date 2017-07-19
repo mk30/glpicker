@@ -21,21 +21,15 @@ function getobjectid (draws, offsetx, offsety) {
   draws.forEach(function(draw){
     draw({ framebuffer: fb })
   })
-  var x
-  var y
-  if (window.innerHeight - offsety <= 0) y = 1
-    else y = window.innerHeight - offsety
-  if (offsetx <= 0) x = 1 
-    else x = offsetx
-  console.log(offsetx, offsety)
   regl.draw(function () {
     var data = regl.read({
       framebuffer: fb,
-      x: x,
-      y: y,
+      x: offsetx, 
+      y: offsety,
       width: 1,
       height: 1
     })
+    console.log(offsetx + ' , ' + offsety)
     //console.log(data)
   })
 }
@@ -155,7 +149,10 @@ regl.frame(function(context){
 })
 window.addEventListener('click', function (ev){ 
   console.log(ev.offsetX + ' , ' + ev.offsetY)
+  var x = Math.min(window.innerWidth - 1,  Math.max(1, ev.offsetX))
+  var y = Math.min(window.innerHeight - 1, Math.max(1, window.innerHeight - ev.offsetY))
+  console.log(x , y)
   camera(function(){
-    getobjectid([draw.catmugbg, draw.phonebg], ev.offsetX, ev.offsetY)
+    getobjectid([draw.catmugbg, draw.phonebg], x, y)
   })
 })
