@@ -3,8 +3,7 @@ var regl = require('regl')({
   attributes: {preserveDrawingBuffer: true}
 })
 var camera = require('regl-camera')(regl,{
-  distance: 100,
-  center: [10,0,0]
+  distance: 5
 })
 var anormals = require('angle-normals')
 var mat4 = require('gl-mat4')
@@ -103,7 +102,10 @@ var phoneopts = {
   },
   uniforms: {
     model: function (context){
+      var t = context.time
       mat4.identity(pmodel)
+      mat4.scale(pmodel, pmodel, [0.01,0.01,0.01])
+      mat4.rotateY(pmodel, pmodel, t)
       return pmodel
     },
     time: regl.context('time')
@@ -143,8 +145,8 @@ var draw = {
 regl.frame(function(context){
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    draw.catmugbg({framebuffer: null})
-    draw.phonebg({framebuffer: null})
+    draw.catmugfg()
+    draw.phonefg()
   })
 })
 window.addEventListener('click', function (ev){ 
