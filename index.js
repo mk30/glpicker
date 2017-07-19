@@ -1,9 +1,10 @@
 var regl = require('regl')({
-  extensions: ['OES_texture_float'],
+  extensions: ['OES_texture_float', 'oes_element_index_uint'],
   attributes: {preserveDrawingBuffer: true}
 })
 var camera = require('regl-camera')(regl,{
-  distance: 7 
+  distance: 100,
+  center: [10,0,0]
 })
 var anormals = require('angle-normals')
 var mat4 = require('gl-mat4')
@@ -15,7 +16,6 @@ var fb = regl.framebuffer({
   colorType: 'float32'
 })
 function getobjectid (draws, offsetx, offsety) {
-  fb.resize(window.innerWidth, window.innerHeight)
   regl.clear({ color: [0,0,0,1], depth: true, framebuffer: fb })
   draws.forEach(function(draw){
     draw({ framebuffer: fb })
@@ -23,7 +23,7 @@ function getobjectid (draws, offsetx, offsety) {
   regl.draw(function () {
     var data = regl.read({
       x: offsetx,
-      y: offsety,
+      y: window.innerHeight - offsety,
       width: 1,
       height: 1
     })
@@ -101,8 +101,6 @@ var phoneopts = {
   uniforms: {
     model: function (context){
       mat4.identity(pmodel)
-      mat4.translate(pmodel, pmodel, [0,1,0])
-      mat4.scale(pmodel, pmodel, [0.01,0.01,0.01])
       return pmodel
     },
     time: regl.context('time')
@@ -140,15 +138,16 @@ var draw = {
   phonebg: phonebg(regl)
 }
 regl.frame(function(context){
+  fb.resize(context.viewportWidth, context.viewportHeight)
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    draw.catmugfg()
-    draw.phonefg()
+    //draw.catmugfg()
+    draw.phonebg({framebuffer: null})
   })
 })
 window.addEventListener('click', function (ev){ 
   console.log(ev.offsetX + ' , ' + ev.offsetY)
   camera(function(){
-    getobjectid([draw.catmugbg,draw.phonebg], ev.offsetX, ev.offsetY)
+    getobjectid([draw.phonebg], ev.offsetX, ev.offsetY)
   })
 })
