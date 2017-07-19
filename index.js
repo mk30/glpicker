@@ -30,7 +30,7 @@ function getobjectid (draws, offsetx, offsety) {
       height: 1
     })
     console.log(offsetx + ' , ' + offsety)
-    //console.log(data)
+    console.log(data)
   })
 }
 var catopts = { 
@@ -148,10 +148,8 @@ regl.frame(function(context){
   })
 })
 window.addEventListener('click', function (ev){ 
-  console.log(ev.offsetX + ' , ' + ev.offsetY)
   var x = Math.min(window.innerWidth - 1,  Math.max(1, ev.offsetX))
   var y = Math.min(window.innerHeight - 1, Math.max(1, window.innerHeight - ev.offsetY))
-  console.log(x , y)
   camera(function(){
     getobjectid([draw.catmugbg, draw.phonebg], x, y)
   })
