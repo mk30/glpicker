@@ -14,7 +14,8 @@ var fb = regl.framebuffer({
   colorFormat: 'rgba',
   colorType: 'float32'
 })
-function getobjectid (draws, offsetx, offsety) {
+var selectedid = 0
+function getselectedid (draws, offsetx, offsety) {
   fb.resize(window.innerWidth, window.innerHeight)
   regl.clear({ color: [0,0,0,1], depth: true, framebuffer: fb })
   draws.forEach(function(draw){
@@ -29,13 +30,15 @@ function getobjectid (draws, offsetx, offsety) {
       height: 1
     })
     console.log(offsetx + ' , ' + offsety)
-    console.log(data)
+    selectedid = data[0]
+    console.log(selectedid)
   })
 }
 var catopts = { 
   vert: `
     precision mediump float;
     uniform mat4 projection, view, model;
+    uniform float selectedid;
     attribute vec3 position, normal;
     varying vec3 vnorm, vpos;
     void main (){
@@ -53,7 +56,9 @@ var catopts = {
     model: function (context){
       return mat4.identity(cmodel)
     },
-    time: regl.context('time')
+    time: regl.context('time'),
+    modelid: regl.prop('modelid'),
+    selectedid: regl.prop('selectedid')
   },
   primitive: "triangles",
   elements: catmug.cells
@@ -62,9 +67,11 @@ function catmugfg (regl) {
   return regl(Object.assign({
     frag: `
       precision mediump float;
+      uniform float selectedid, modelid;
       varying vec3 vnorm, vpos;
+      float x = clamp(1.0-abs(selectedid-modelid), 0.0, 1.0);
       void main (){
-        gl_FragColor = vec4(vnorm - vpos,1);
+        gl_FragColor = vec4(vnorm.x + x, vnorm.y, vnorm.z,1);
       }
     `
   }, catopts))
@@ -108,7 +115,9 @@ var phoneopts = {
       mat4.rotateY(pmodel, pmodel, t)
       return pmodel
     },
-    time: regl.context('time')
+    time: regl.context('time'),
+    modelid: regl.prop('modelid'),
+    selectedid: regl.prop('selectedid')
   },
   primitive: "triangles",
   elements: phone.cells
@@ -117,9 +126,11 @@ function phonefg (regl) {
   return regl(Object.assign({
     frag: `
       precision mediump float;
+      uniform float selectedid, modelid;
       varying vec3 vnorm, vpos;
+      float x = clamp(1.0-abs(selectedid-modelid), 0.0, 1.0);
       void main (){
-        gl_FragColor = vec4(vnorm,1);
+        gl_FragColor = vec4(vnorm.x + x, vnorm.y, vnorm.z, 1);
       }
     `
   }, phoneopts))
@@ -131,7 +142,7 @@ function phonebg (regl) {
       precision mediump float;
       varying vec3 vnorm, vpos;
       void main (){
-        gl_FragColor = vec4(0,1,0,1);
+        gl_FragColor = vec4(2,0,0,1);
       }
     `
   }, phoneopts))
@@ -145,14 +156,14 @@ var draw = {
 regl.frame(function(context){
   regl.clear({color: [0,0,0,1], depth:true})
   camera(function(){
-    draw.catmugfg()
-    draw.phonefg()
+    draw.catmugfg({selectedid : selectedid, modelid: 1})
+    draw.phonefg({selectedid : selectedid, modelid: 2})
   })
 })
 window.addEventListener('click', function (ev){ 
   var x = Math.min(window.innerWidth - 1,  Math.max(1, ev.offsetX))
   var y = Math.min(window.innerHeight - 1, Math.max(1, window.innerHeight - ev.offsetY))
   camera(function(){
-    getobjectid([draw.catmugbg, draw.phonebg], x, y)
+    getselectedid([draw.catmugbg, draw.phonebg], x, y)
   })
 })
